@@ -1,0 +1,186 @@
+Attribute VB_Name = "Module1"
+'Run on all worksheets, read the read me file for sources
+
+Sub Dosomething()
+    Dim xSh As Worksheet
+    Application.ScreenUpdating = False
+    For Each xSh In Worksheets
+        xSh.Select
+        Call RunCode
+    Next
+    Application.ScreenUpdating = True
+End Sub
+
+
+
+Sub RunCode()
+    
+    'Set the words in the tables
+    Cells(1, 9).Value = "Ticker"
+    Cells(1, 10).Value = "Yearly Change"
+    Cells(1, 11).Value = "Percentage Change"
+    Cells(1, 12).Value = "Total Stock Volume"
+    
+    Cells(2, 15).Value = "Greatest Increase"
+    Cells(3, 15).Value = "Greatest Decrease"
+    Cells(4, 15).Value = "Greatest Total Volume"
+    Cells(1, 16).Value = "Ticker"
+    Cells(1, 17).Value = "Value"
+    
+    
+    
+    ''Set variables for holding the ticker symbol
+    
+    Dim Ticker_Symbol As String
+    Dim Summary_Table_Row As Integer
+    
+    'Set variables for holding open price, close price, yearly change, percentage, volume, and total stock volume.
+    Dim Open_Price  As Double
+    Dim Close_Price As Double
+    Dim Yearly_Change As Double
+    Dim Yearly_Change_Percentage As Double
+    Dim Vol As Double
+    Dim Total_Stock_Volume As Double
+    
+    Open_Price = Cells(2, 3).Value
+    Close_Price = 0
+    Yearly_Change = 0
+    Yearly_Change_Percentage = 0
+    Total_Stock_Volume = 0
+    
+    'Keep track of the location for each ticker symbol in the summary table
+    Summary_Table_Row = 2
+    
+    'finding the last row in column 1. create variable
+    Dim lastrow_c1  As Long
+    lastrow_c1 = Cells(Rows.Count, 1).End(xlUp).Row
+    
+    'Loop through all ticker symbols on the table
+    For i = 2 To lastrow_c1
+        
+        'Check if we are in the same ticker symbol value for the cells if not then...
+        If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+            
+            'Set the ticker symbol name
+            Ticker_Symbol = Cells(i, 1).Value
+            
+            'Print the ticker symbol in the Summary Table
+            Range("I" & Summary_Table_Row).Value = Ticker_Symbol
+            
+            ' Get closing price
+            Close_Price = Cells(i, 6).Value
+            
+            '---------------------------------------------------------------------------------------------------------------------
+            
+            'Calculating the yearly change
+            Yearly_Change = Close_Price - Open_Price
+            
+            'Print the Yearly Change amount in the Summary Table
+            Range("J" & Summary_Table_Row).Value = Yearly_Change
+            '---------------------------------------------------------------------------------------------------------------------
+            
+            'Calculating the yearly change percentage
+            Yearly_Change_Percentage = Yearly_Change / Open_Price
+            Open_Price = Cells(i + 1, 3).Value
+            
+            'Print the Yearly Change Percentage amount in the Summary Table
+            Range("K" & Summary_Table_Row).Value = Yearly_Change_Percentage
+            
+            Range("K" & Summary_Table_Row).NumberFormat = "0.00%"
+            '---------------------------------------------------------------------------------------------------------------------
+            
+            'Calculating the total stock volume
+            Total_Stock_Volume = Total_Stock_Volume + Cells(i, 7).Value
+            
+            'Print the Yearly Change Percentage amount in the Summary Table
+            Range("L" & Summary_Table_Row).Value = Total_Stock_Volume
+            
+            '---------------------------------------------------------------------------------------------------------------------
+            
+            'Add one to the summary table row
+            Summary_Table_Row = Summary_Table_Row + 1
+            
+            'Reset the yearly change
+            Yearly_Change = 0
+            
+            'Reset the yearly percentage change
+            Yearly_Change_Percentage = 0
+            
+            'Reset the total stock volume
+            Total_Stock_Volume = 0
+            
+            'If the cell immediately following a row is the same ticker....
+        Else
+            
+            'Calculate the Yearly Change
+            Yearly_Change = ((Open_Price + Cells(i, 3).Value) - (Close_Price + Cells(i, 6).Value))
+            
+            'Calculate the Yearly Change Percentage
+            Yearly_Change_Percentage = ((Open_Price + Cells(i, 3).Value) / (Close_Price + Cells(i, 6).Value))
+            
+            'Calculate the Total Stock Volume
+            Total_Stock_Volume = Total_Stock_Volume + Cells(i, 7).Value
+            
+        End If
+        
+    Next i
+    
+    'index colouring for the yearly change column
+    '---------
+    '            'finding the last row in column 10. create variable
+    Dim lastrow_c10 As Integer
+    lastrow_c10 = Cells(Rows.Count, 10).End(xlUp).Row
+    
+    For i = 2 To lastrow_c10
+        If Cells(i, 10).Value >= 0 Then
+            Cells(i, 10).Interior.ColorIndex = 4
+            
+        Else
+            Cells(i, 10).Interior.ColorIndex = 3
+            
+        End If
+        
+    Next i
+    
+    'index colouring for the percentage change column
+    '---------
+    '            'finding the last row in column 11. create variable
+    Dim lastrow_c11 As Integer
+    lastrow_c11 = Cells(Rows.Count, 11).End(xlUp).Row
+    
+    For i = 2 To lastrow_c11
+        If Cells(i, 11).Value >= 0 Then
+            Cells(i, 11).Interior.ColorIndex = 4
+            
+        Else
+            Cells(i, 11).Interior.ColorIndex = 3
+            
+        End If
+        
+        
+    
+        
+    Next i
+
+    
+    ''    ''-----------bonus------------------
+    '    declare the variables
+    
+    Cells(2, 17).Value = "%" & WorksheetFunction.Max(Range("K2:K" & lastrow_c1)) * 100
+    Cells(3, 17).Value = "%" & WorksheetFunction.Min(Range("K2:K" & lastrow_c1)) * 100
+    Cells(4, 17).Value = WorksheetFunction.Max(Range("L2:L" & lastrow_c1))
+    
+'   Find the Maximum/Decrease in the columns percentage change and total stock volume
+    maxIncrease = WorksheetFunction.Match(WorksheetFunction.Max(Range("K2:K" & lastrow_c1)), Range("K2:K" & lastrow_c1), 0)
+    maxDecrease = WorksheetFunction.Match(WorksheetFunction.Min(Range("K2:K" & lastrow_c1)), Range("K2:K" & lastrow_c1), 0)
+    maxVolume = WorksheetFunction.Match(WorksheetFunction.Max(Range("L2:L" & lastrow_c1)), Range("L2:L" & lastrow_c1), 0)
+
+' Returning the correct ticker
+
+    Range("P2") = Cells(maxIncrease + 1, 9)
+    Range("P3") = Cells(maxDecrease + 1, 9)
+    Range("P4") = Cells(maxVolume + 1, 9)
+
+            
+    
+End Sub
